@@ -107,7 +107,7 @@ Neo4j requires specific header formats. Update the headers:
 # Change header from:
 # node_index  node_id  node_type  node_name  node_source
 # To:
-sed -i '1s/.*/node_index:ID\tnode_id\t:LABEL\tnode_name\tnode_source/' nodes.tab
+sed -i.bak '1s/.*/node_index:ID\tnode_id\t:LABEL\tnode_name\tnode_source/' nodes.tab
 ```
 
 **For edges.csv:**
@@ -115,7 +115,7 @@ sed -i '1s/.*/node_index:ID\tnode_id\t:LABEL\tnode_name\tnode_source/' nodes.tab
 # Change header from:
 # relation,display_relation,x_index,y_index
 # To:
-sed -i '1s/.*/:TYPE,display_relation,:START_ID,:END_ID/' edges.csv
+sed -i.bak '1s/.*/:TYPE,display_relation,:START_ID,:END_ID/' edges.csv
 ```
 
 Or manually edit the first line of each file:
@@ -242,7 +242,7 @@ Add to your `claude_desktop_config.json`:
 **Note:** 
 - Use `primekg-auto-dev` with the `--directory` flag when developing locally or before publishing
 - Use `primekg-auto` after publishing to PyPI for simpler configuration
-- Replace `/absolute/path/to/mcp-primekg` with the actual path where you cloned this repository
+- Replace `/absolute/path/to/MCP_Harvard_PrimeKG` with the actual path where you cloned this repository
 
 #### Using Neo4j (for better performance with complex queries):
 ```json

@@ -1,6 +1,6 @@
 # Adding PrimeKG to Your Claude Desktop Configuration
 
-This guide shows how to add PrimeKG queries to your existing MCP server setup.
+This guide shows how to add PrimeKG queries to your existing [Proto-OKN MCP](https://github.com/sbl-sdsc/mcp-proto-okn) server setup.
 
 ## Your Updated Configuration
 
@@ -41,7 +41,7 @@ Add this entry to your existing `claude_desktop_config.json`:
     },    
     "primekg-auto-dev": {
       "command": "uv",
-      "args": ["run", "--directory", "/Users/username/Desktop/mcp-primekg", "mcp-primekg"],
+      "args": ["run", "--directory", "/path/to/MCP_Harvard_PrimeKG", "mcp-primekg"],
       "env": {
         "PRIMEKG_DATA_PATH": "/Users/username/primekg_data",
         "PRIMEKG_AUTO_UPDATE": "true",
@@ -70,7 +70,7 @@ Add this entry to your existing `claude_desktop_config.json`:
 ### `primekg-auto-dev` (Local Development)
 Use this while developing or before publishing to PyPI:
 - Points to your local repository with `--directory` flag
-- Requires you to have cloned the mcp-primekg repository
+- Requires you to have cloned the MCP_Harvard_PrimeKG repository
 - Update the path to match where you cloned the repository
 
 ### `primekg-auto` (Production/Published)
@@ -118,10 +118,10 @@ Download only these two files from Harvard Dataverse:
 
 ```bash
 # Download nodes file (7.5 MB)
-curl -o nodes.tab "https://dataverse.harvard.edu/api/access/datafile/6180617"
+curl -LO nodes.tab "https://dataverse.harvard.edu/api/access/datafile/6180617"
 
 # Download edges file (368.6 MB)
-curl -o edges.csv "https://dataverse.harvard.edu/api/access/datafile/6180616"
+curl -LO edges.csv "https://dataverse.harvard.edu/api/access/datafile/6180616"
 ```
 
 Or download manually from: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IXA7BM
