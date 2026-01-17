@@ -8,13 +8,6 @@ authors = [
     { name = "Amanda Saravia-Butler", email = "amanda.saravia-butler@nasa.gov" }
 ]
 keywords = ["mcp", "primekg", "knowledge-graph", "precision-medicine", "biomedical", "spoke-okn", "spoke-genelab"]
-
-[project.urls]
-Homepage = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG"
-Repository = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG"
-Documentation = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG#readme"
-Issues = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG/issues"
-
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -32,6 +25,12 @@ dependencies = [
     "neo4j>=5.14.0",
     "requests>=2.31.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG"
+Repository = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG"
+Documentation = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG#readme"
+Issues = "https://github.com/asaravia-butler/MCP_Harvard_PrimeKG/issues"
 
 [project.optional-dependencies]
 dev = [
