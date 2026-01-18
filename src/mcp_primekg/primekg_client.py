@@ -35,7 +35,19 @@ class PrimeKGClient:
         self.update_interval_days = update_interval_days
         self.nodes_df = None
         self.edges_df = None
-        self._load_data()
+        self._data_loaded = False
+        
+        # Check if we need to download data, but don't load it yet
+        if self.auto_update and self._should_update():
+            logger.info("PrimeKG data is stale or missing, downloading latest version...")
+            if not self._download_primekg_data():
+                logger.warning("Failed to download data, will attempt to use cached version")
+    
+    def _ensure_data_loaded(self):
+        """Ensure data is loaded before use (lazy loading)."""
+        if not self._data_loaded:
+            self._load_data()
+            self._data_loaded = True
     
     def _should_update(self) -> bool:
         """Check if data should be updated based on age."""
@@ -106,18 +118,12 @@ class PrimeKGClient:
     
     def _load_data(self):
         """Load PrimeKG data from CSV files."""
-        # Check if we should update
-        if self.auto_update and self._should_update():
-            logger.info("PrimeKG data is stale or missing, downloading latest version...")
-            if not self._download_primekg_data():
-                logger.warning("Failed to download data, attempting to use cached version")
-        
         try:
             # Try to load main knowledge graph file
             kg_file = self.data_path / "kg.csv"
             if kg_file.exists():
                 logger.info(f"Loading PrimeKG data from {kg_file}...")
-                df = pd.read_csv(kg_file)
+                df = pd.read_csv(kg_file, low_memory=False)
                 
                 # The kg.csv file contains edges with columns like:
                 # x_id, x_type, x_name, relation, y_id, y_type, y_name, etc.
@@ -195,6 +201,8 @@ Relationship Type Distribution:
     
     def search_nodes(self, query: str, node_type: Optional[str] = None, limit: int = 10) -> str:
         """Search for nodes by name or ID."""
+        self._ensure_data_loaded()
+        
         if self.nodes_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
@@ -213,6 +221,8 @@ Relationship Type Distribution:
     
     def get_node_relationships(self, node_id: str, relationship_type: Optional[str] = None, limit: int = 50) -> str:
         """Get all relationships for a specific node."""
+        self._ensure_data_loaded()
+        
         if self.edges_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
@@ -231,6 +241,8 @@ Relationship Type Distribution:
     
     def find_drug_targets(self, drug_name: str) -> str:
         """Find gene/protein targets for a given drug."""
+        self._ensure_data_loaded()
+        
         if self.nodes_df is None or self.edges_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
@@ -256,6 +268,8 @@ Relationship Type Distribution:
     
     def find_disease_genes(self, disease_name: str, limit: int = 50) -> str:
         """Find genes associated with a disease."""
+        self._ensure_data_loaded()
+        
         if self.nodes_df is None or self.edges_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
@@ -281,6 +295,8 @@ Relationship Type Distribution:
     
     def find_drug_disease_paths(self, drug_name: str, disease_name: str, max_path_length: int = 3) -> str:
         """Find potential connections between a drug and disease."""
+        self._ensure_data_loaded()
+        
         if self.nodes_df is None or self.edges_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
@@ -290,6 +306,8 @@ Relationship Type Distribution:
     
     def get_node_details(self, node_id: str) -> str:
         """Get detailed information about a specific node."""
+        self._ensure_data_loaded()
+        
         if self.nodes_df is None:
             return "PrimeKG data not loaded. Please download from: https://github.com/mims-harvard/PrimeKG"
         
