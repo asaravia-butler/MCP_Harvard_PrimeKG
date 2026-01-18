@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 authors = [
     { name = "Amanda Saravia-Butler", email = "amanda.saravia-butler@nasa.gov" }
 ]
-keywords = ["mcp", "primekg", "knowledge-graph", "precision-medicine", "biomedical", "spoke-okn", "spoke-genelab"]
+keywords = ["mcp", "primekg", "knowledge-graph", "precision-medicine", "biomedical"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -41,7 +41,7 @@ dev = [
 ]
 
 [project.scripts]
-mcp-primekg = "mcp_primekg:main"
+mcp-primekg = "mcp_primekg:entry_point"
 
 [build-system]
 requires = ["hatchling"]
