@@ -25,7 +25,8 @@ Add this entry to your existing `claude_desktop_config.json`:
         "NEO4J_USERNAME": "neo4j",
         "NEO4J_PASSWORD": "myPassword",
         "NEO4J_DATABASE": "spoke-genelab-v0.1.0",
-        "INSTRUCTIONS": "Query the GeneLab KG to identify NASA spaceflight experiments containing omics datasets, specifically differential gene expression (transcriptomics) and DNA methylation (epigenomics) data."
+        "INSTRUCTIONS": "Query the GeneLab KG to identify NASA spaceflight experiments containing omics datasets, specifically differential gene expression (transcriptomics) and DNA 
+methylation (epigenomics) data."
       }
     },
     "genelab-dev": {
@@ -36,7 +37,8 @@ Add this entry to your existing `claude_desktop_config.json`:
         "NEO4J_USERNAME": "username",
         "NEO4J_PASSWORD": "mypassword",
         "NEO4J_DATABASE": "spoke-genelab-v0.1.0",
-        "INSTRUCTIONS": "Query the GeneLab KG to identify NASA spaceflight experiments containing omics datasets, specifically differential gene expression (transcriptomics) and DNA methylation (epigenomics) data."
+        "INSTRUCTIONS": "Query the GeneLab KG to identify NASA spaceflight experiments containing omics datasets, specifically differential gene expression (transcriptomics) and DNA 
+methylation (epigenomics) data."
       }
     },    
     "primekg-auto-dev": {
@@ -46,7 +48,8 @@ Add this entry to your existing `claude_desktop_config.json`:
         "PRIMEKG_DATA_PATH": "/Users/username/primekg_data",
         "PRIMEKG_AUTO_UPDATE": "true",
         "PRIMEKG_UPDATE_INTERVAL_DAYS": "7",
-        "INSTRUCTIONS": "Query the latest version of PrimeKG precision medicine knowledge graph containing 129,375 nodes (genes, drugs, diseases, biological processes) and 8+ million relationships from 20+ biomedical databases for drug discovery and precision medicine insights."
+        "INSTRUCTIONS": "Query the latest version of PrimeKG precision medicine knowledge graph containing 129,375 nodes (genes, drugs, diseases, biological processes) and 8+ million 
+relationships from 20+ biomedical databases for drug discovery and precision medicine insights."
       }
     },    
     "primekg-auto": {
@@ -56,7 +59,8 @@ Add this entry to your existing `claude_desktop_config.json`:
         "PRIMEKG_DATA_PATH": "/Users/username/primekg_data",
         "PRIMEKG_AUTO_UPDATE": "true",
         "PRIMEKG_UPDATE_INTERVAL_DAYS": "7",
-        "INSTRUCTIONS": "Query the latest version of PrimeKG precision medicine knowledge graph containing 129,375 nodes (genes, drugs, diseases, biological processes) and 8+ million relationships from 20+ biomedical databases for drug discovery and precision medicine insights."
+        "INSTRUCTIONS": "Query the latest version of PrimeKG precision medicine knowledge graph containing 129,375 nodes (genes, drugs, diseases, biological processes) and 8+ million 
+relationships from 20+ biomedical databases for drug discovery and precision medicine insights."
       }
     }
   }
@@ -118,49 +122,60 @@ Download only these two files from Harvard Dataverse:
 
 ```bash
 # Download nodes file (7.5 MB)
-curl -LO nodes.tab "https://dataverse.harvard.edu/api/access/datafile/6180617"
+curl -o nodes.tab "https://dataverse.harvard.edu/api/access/datafile/6180617"
 
 # Download edges file (368.6 MB)
-curl -LO edges.csv "https://dataverse.harvard.edu/api/access/datafile/6180616"
+curl -o edges.csv "https://dataverse.harvard.edu/api/access/datafile/6180616"
 ```
 
 Or download manually from: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IXA7BM
-- nodes.tab (7.5 MB)
-- edges.csv (368.6 MB)
 
-#### 2. Prepare Files for Neo4j Import
+#### 2. Convert nodes.tab to CSV
 
-Neo4j requires specific header formats. Update the headers of both files:
+Neo4j works best with comma-delimited files. Create `convert_nodes.py`:
 
-**Option A: Using command line (macOS/Linux)**
+```python
+#!/usr/bin/env python3
+import csv
 
-For **nodes.tab**:
-```bash
-sed -i '1s/.*/node_index:ID\tnode_id\t:LABEL\tnode_name\tnode_source/' nodes.tab
+with open('nodes.tab', 'r') as infile:
+    reader = csv.reader(infile, delimiter='\t')
+    with open('nodes.csv', 'w', newline='') as outfile:
+        writer = csv.writer(outfile)
+        for row in reader:
+            writer.writerow(row)
+print("✓ Created nodes.csv")
 ```
 
-For **edges.csv**:
-```bash
-sed -i '1s/.*/:TYPE,display_relation,:START_ID,:END_ID/' edges.csv
+Run: `python3 convert_nodes.py`
+
+#### 3. Prepare Files for Neo4j Import
+
+Update headers for both CSV files. Create `fix_headers.py`:
+
+```python
+#!/usr/bin/env python3
+
+# Fix nodes.csv
+with open('nodes.csv', 'r') as f:
+    lines = f.readlines()
+lines[0] = 'node_index:ID,node_id,:LABEL,node_name,node_source\n'
+with open('nodes.csv', 'w') as f:
+    f.writelines(lines)
+print("✓ Fixed nodes.csv header")
+
+# Fix edges.csv  
+with open('edges.csv', 'r') as f:
+    lines = f.readlines()
+lines[0] = ':TYPE,display_relation,:START_ID,:END_ID\n'
+with open('edges.csv', 'w') as f:
+    f.writelines(lines)
+print("✓ Fixed edges.csv header")
 ```
 
-**Option B: Manually edit headers**
+Run: `python3 fix_headers.py`
 
-Open each file in a text editor and change the first line:
-
-- **nodes.tab** first line should be:
-  ```
-  node_index:ID	node_id	:LABEL	node_name	node_source
-  ```
-  (Note: tabs between columns)
-
-- **edges.csv** first line should be:
-  ```
-  :TYPE,display_relation,:START_ID,:END_ID
-  ```
-  (Note: commas between columns)
-
-#### 3. Import into Neo4j
+#### 4. Import into Neo4j
 
 **Using Neo4j Desktop:**
 
@@ -174,10 +189,8 @@ Open each file in a text editor and change the first line:
 
 ```bash
 ./bin/neo4j-admin database import full primekg \
-  --nodes=/absolute/path/to/nodes.tab \
+  --nodes=/absolute/path/to/nodes.csv \
   --relationships=/absolute/path/to/edges.csv \
-  --delimiter-nodes=TAB \
-  --delimiter-relationships=COMMA \
   --trim-strings=true
 ```
 
@@ -185,24 +198,26 @@ Open each file in a text editor and change the first line:
 
 ```bash
 neo4j-admin database import full primekg \
-  --nodes=/absolute/path/to/nodes.tab \
+  --nodes=/absolute/path/to/nodes.csv \
   --relationships=/absolute/path/to/edges.csv \
-  --delimiter-nodes=TAB \
-  --delimiter-relationships=COMMA \
   --trim-strings=true
 ```
 
 **Important Notes:**
-- Use **absolute paths** to your files
+- Use **absolute paths** to your files (e.g., `/Users/yourusername/Downloads/nodes.csv`)
 - The database must be **stopped** during import
 - Import creates a new database named "primekg"
 - This takes ~5-10 minutes depending on your hardware
 
-#### 4. Verify the Import
+#### 5. Verify the Import
 
 1. Start the "primekg" database in Neo4j Desktop
 2. Open Neo4j Browser
-3. Run these queries to verify:
+3. **CRITICAL: Select the correct database**
+   - Look for the database dropdown at the top of Neo4j Browser (usually shows "neo4j")
+   - Click the dropdown and **select "primekg"**
+   - Without this step, your queries will return no results!
+4. Run these queries to verify:
 
 ```cypher
 // Check total nodes (should be ~129,375)
@@ -227,7 +242,12 @@ Expected results:
 - ~4,050,249 relationships
 - Node types: disease, drug, gene/protein, biological_process, etc.
 
-#### 5. Configure Claude Desktop
+**If queries return 0 or nothing:**
+- ✅ Make sure you selected "primekg" database in the dropdown (step 3 above)
+- ✅ Verify the database is running (shows "Active")
+- ✅ Check import logs for errors
+
+#### 6. Configure Claude Desktop
 
 Add this to your `claude_desktop_config.json`:
 
@@ -238,14 +258,16 @@ Add this to your `claude_desktop_config.json`:
   "env": {
     "NEO4J_URI": "bolt://localhost:7687",
     "NEO4J_USERNAME": "neo4j",
-    "NEO4J_PASSWORD": "your_password",
+    "NEO4J_PASSWORD": "your_password_here",
     "NEO4J_DATABASE": "primekg",
     "INSTRUCTIONS": "Query the PrimeKG precision medicine knowledge graph for drug-disease-gene relationships and biomedical insights from 20+ integrated databases."
   }
 }
 ```
 
-#### 6. Test with Claude
+Replace `your_password_here` with the password you set for your Neo4j database.
+
+#### 7. Test with Claude
 
 After restarting Claude Desktop, test queries like:
 - "Find all drugs that target EGFR in PrimeKG"
@@ -293,3 +315,4 @@ After restarting Claude Desktop, test queries like:
 **Disable auto-updates:**
 - Set `"PRIMEKG_AUTO_UPDATE": "false"` in config
 - Manually update data as needed
+
